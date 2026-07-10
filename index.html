@@ -24,6 +24,14 @@
         input[type=number] {
             -moz-appearance: textfield;
         }
+        /* Modal scale transition animation */
+        .modal-active {
+            opacity: 1 !important;
+            pointer-events: auto !important;
+        }
+        .modal-content-active {
+            transform: scale(1) !important;
+        }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col justify-between">
@@ -151,7 +159,7 @@
                     </div>
                 </div>
 
-                <!-- Info panel for visual instructions -->
+                <!-- Info panel for rent adjustments -->
                 <div class="bg-amber-50 border border-amber-200/60 rounded-2xl p-5 text-amber-900">
                     <h4 class="text-sm font-bold mb-1.5 flex items-center gap-2 text-amber-800">
                         <i class="fa-solid fa-circle-info"></i>
@@ -314,7 +322,6 @@
                     </div>
                 </div>
 
-                <!-- Rent Summary copy card -->
                 <div class="bg-gradient-to-br from-slate-900 to-indigo-950 text-white rounded-2xl p-6 shadow-md relative overflow-hidden">
                     <div class="absolute -right-10 -bottom-10 w-40 h-40 bg-indigo-500/10 rounded-full blur-2xl"></div>
                     
@@ -344,7 +351,6 @@
             </div>
         </div>
 
-        <!-- Section 2: Meal Calculator (মিলের হিসাব) -->
         <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
             <div class="border-b pb-4 mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div class="flex items-center space-x-3">
@@ -523,7 +529,6 @@
                 </div>
             </div>
 
-            <!-- Meal Share Summary Output -->
             <div class="mt-8 bg-gradient-to-br from-rose-950 to-slate-900 text-white rounded-2xl p-6 shadow-md relative overflow-hidden">
                 <div class="absolute -right-10 -bottom-10 w-40 h-40 bg-rose-500/10 rounded-full blur-2xl"></div>
                 
@@ -553,16 +558,69 @@
         </div>
     </main>
 
+    <!-- Floating Google Sheet Connection Modal (Hidden by Default) -->
+    <div id="sync-modal-overlay" class="fixed inset-0 bg-slate-950/60 backdrop-blur-md z-50 flex items-center justify-center p-4 opacity-0 pointer-events-none transition-all duration-300">
+        <div id="sync-modal-content" class="bg-white rounded-3xl p-6 max-w-lg w-full shadow-2xl border border-slate-100 transform scale-90 transition-all duration-300 relative">
+            
+            <!-- Close Button -->
+            <button onclick="closeSyncModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition">
+                <i class="fa-solid fa-circle-xmark text-2xl"></i>
+            </button>
+
+            <!-- Title Header inside Modal -->
+            <div class="flex items-center space-x-3 mb-4">
+                <div class="bg-indigo-600 text-white p-2.5 rounded-2xl">
+                    <i class="fa-solid fa-file-excel text-2xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-base font-bold text-slate-800">গুগল শিট সিনক্রোনাইজেশন হাব</h3>
+                    <p class="text-xs text-slate-500">Google Sheet Connection Hub</p>
+                </div>
+            </div>
+
+            <!-- Settings Field Wrapper inside Modal -->
+            <div class="bg-slate-50 rounded-2xl p-4 border border-slate-100 space-y-3 mb-4">
+                <label class="block text-xs font-bold text-slate-600 uppercase">Google Web App Script URL</label>
+                <div class="flex flex-col gap-2">
+                    <input type="text" id="sheets-web-url" class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="https://script.google.com/macros/s/.../exec">
+                    <button onclick="saveWebUrl()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 px-4 rounded-xl text-xs transition duration-150 flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-floppy-disk"></i> Save URL (সেভ করুন)
+                    </button>
+                </div>
+                <p class="text-[10px] text-slate-400 leading-normal"><i class="fa-solid fa-lock"></i> এই URL টি আপনার ব্রাউজারের লোকাল স্টোরেজে (localStorage) সুরক্ষিত থাকবে, GitHub-এ প্রকাশ পাবে না।</p>
+            </div>
+
+            <!-- Action Controls inside Modal -->
+            <div class="space-y-3">
+                <span class="block text-xs font-bold text-slate-400 uppercase tracking-wider px-1">সিঙ্ক অ্যাকশনস (Instant Sync Operations)</span>
+                <div class="flex flex-col sm:flex-row gap-3">
+                    <button onclick="syncRentToSheet()" id="sync-rent-btn" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-xl transition flex items-center justify-center gap-2 text-xs shadow-md shadow-indigo-600/10">
+                        <i class="fa-solid fa-cloud-arrow-up"></i>
+                        <span>Rent Sheet (ভাড়া পাঠান)</span>
+                    </button>
+                    <button onclick="syncMealsToSheet()" id="sync-meal-btn" class="flex-1 bg-rose-600 hover:bg-rose-700 text-white font-bold py-3 px-4 rounded-xl transition flex items-center justify-center gap-2 text-xs shadow-md shadow-rose-600/10">
+                        <i class="fa-solid fa-cloud-arrow-up"></i>
+                        <span>Meals Sheet (মিল পাঠান)</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Custom toast alert system inside iframe -->
     <div id="toast-message" class="hidden fixed top-4 left-1/2 -translate-x-1/2 bg-emerald-500 text-white text-xs font-bold px-5 py-3 rounded-xl shadow-lg transition-all duration-300 z-50 text-center min-w-[280px]">
         <i class="fa-solid fa-circle-check mr-1.5"></i> Copied to Clipboard Successfully!
     </div>
 
-    <!-- Footer -->
-    <footer class="bg-white border-t border-slate-200 py-6 mt-12 text-center text-xs text-slate-400">
+    <!-- Interactive Footer with secret Double Tap Hook -->
+    <footer id="app-footer" class="bg-white border-t border-slate-200 py-6 mt-12 text-center text-xs text-slate-400 cursor-pointer select-none group transition duration-150 hover:bg-slate-50/50">
         <div class="max-w-4xl mx-auto px-4 space-y-2">
-            <p class="font-medium text-slate-500">Present Trouble Rent & Meal Calculator • Made with <i class="fa-solid fa-bolt text-amber-500"></i></p>
+            <p class="font-medium text-slate-500 transition duration-150 group-hover:text-indigo-600">Present Trouble Rent & Meal Calculator • Made with <i class="fa-solid fa-bolt text-amber-500"></i></p>
             <p>Designed for Troublesome Roommates: JONY, RIFAT, MURAD & RAYHAN</p>
+            <p class="text-[10px] text-slate-300 transition duration-150 group-hover:text-indigo-400 font-bold mt-1.5 flex items-center justify-center gap-1.5">
+                <i class="fa-solid fa-fingerprint animate-pulse text-xs text-indigo-400"></i> 
+                <span>গোপন সিঙ্ক ড্যাশবোর্ডের জন্য এখানে ২ বার ট্যাপ/ডাবল ক্লিক করুন</span>
+            </p>
         </div>
     </footer>
 
@@ -591,7 +649,7 @@
                 meals: {
                     totalCost: 5220,
                     totalCount: 148,
-                    deposits: { JONY: 1500, RIFAT: 1500, MURAD: 1000, RAYHAN: 1240 }, // মোট ডিপোজিট ৫২৪০ টাকা
+                    deposits: { JONY: 1500, RIFAT: 1500, MURAD: 1000, RAYHAN: 1240 }, // মোট ডিপোজিট ৫২৪ো টাকা
                     counts: { JONY: 46, RIFAT: 46, MURAD: 20, RAYHAN: 36 } // মোট মিল ১৪৮টি
                 }
             },
@@ -646,9 +704,54 @@
         const cashBalanceTitle = document.getElementById('cash-balance-title');
 
         window.onload = function() {
+            // Load saved Web App URL if exists
+            const savedUrl = localStorage.getItem("present_trouble_web_url");
+            if (savedUrl) {
+                document.getElementById('sheets-web-url').value = savedUrl;
+            }
+
             loadMonthState(currentActiveMonth);
             setupEventListeners();
+            setupFooterDoubleTap();
         };
+
+        // Footer double tap tracker logic for all devices (Mobile Touch & Desktop double-click)
+        function setupFooterDoubleTap() {
+            const footer = document.getElementById('app-footer');
+            let lastTap = 0;
+
+            // Touch events for Mobile/Tablet
+            footer.addEventListener('touchstart', function(e) {
+                const currentTime = new Date().getTime();
+                const tapLength = currentTime - lastTap;
+                if (tapLength < 300 && tapLength > 0) {
+                    openSyncModal();
+                    e.preventDefault(); // Prevent accidental zoom on mobile
+                }
+                lastTap = currentTime;
+            });
+
+            // Double Click event for Desktops
+            footer.addEventListener('dblclick', function(e) {
+                openSyncModal();
+            });
+        }
+
+        // Modal triggers
+        function openSyncModal() {
+            const overlay = document.getElementById('sync-modal-overlay');
+            const content = document.getElementById('sync-modal-content');
+            overlay.classList.add('modal-active');
+            content.classList.add('modal-content-active');
+            showToastNotification("📶 গুগল শিট সিঙ্ক ড্যাশবোর্ড ওপেন হয়েছে!", "info");
+        }
+
+        function closeSyncModal() {
+            const overlay = document.getElementById('sync-modal-overlay');
+            const content = document.getElementById('sync-modal-content');
+            overlay.classList.remove('modal-active');
+            content.classList.remove('modal-content-active');
+        }
 
         // Dynamic state initialization helper
         function getMonthData(month) {
@@ -1167,21 +1270,188 @@
         // Custom notifications toast loader
         function showToastNotification(message, type) {
             toastMessage.textContent = message;
-            toastMessage.classList.remove('hidden', 'bg-emerald-500', 'bg-rose-500', 'bg-indigo-600');
+            toastMessage.classList.remove('hidden', 'bg-emerald-500', 'bg-rose-500', 'bg-indigo-600', 'bg-amber-500');
             
             if (type === "success") {
                 toastMessage.classList.add('bg-emerald-500');
             } else if (type === "error") {
                 toastMessage.classList.add('bg-rose-500');
-            } else {
+            } else if (type === "info") {
                 toastMessage.classList.add('bg-indigo-600');
+            } else if (type === "warning") {
+                toastMessage.classList.add('bg-amber-500');
             }
 
             toastMessage.classList.remove('hidden');
             
             setTimeout(() => {
                 toastMessage.classList.add('hidden');
-            }, 3000);
+            }, 4000);
+        }
+
+        // --- GOOGLE SHEETS INTEGRATION CODE BLOCK ---
+
+        // Save sheet URL to local storage
+        function saveWebUrl() {
+            const url = document.getElementById('sheets-web-url').value.trim();
+            if (!url) {
+                showToastNotification("⚠️ অনুগ্রহ করে একটি সঠিক Apps Script URL লিখুন!", "warning");
+                return;
+            }
+            if (!url.startsWith("https://script.google.com")) {
+                showToastNotification("⚠️ এটি সঠিক Google Script URL মনে হচ্ছে না!", "error");
+                return;
+            }
+            localStorage.setItem("present_trouble_web_url", url);
+            showToastNotification("💾 Google Web App URL ব্রাউজারে সুরক্ষিতভাবে সেভ করা হয়েছে!", "success");
+        }
+
+        function getSavedWebUrl() {
+            return localStorage.getItem("present_trouble_web_url");
+        }
+
+        // Sync Rent & Bills function
+        async function syncRentToSheet() {
+            const url = getSavedWebUrl();
+            if (!url) {
+                showToastNotification("⚠️ আগে Settings-এ আপনার Apps Script URL সেভ করুন!", "warning");
+                return;
+            }
+
+            const syncBtn = document.getElementById('sync-rent-btn');
+            const originalText = syncBtn.innerHTML;
+            syncBtn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> Sending...`;
+            syncBtn.disabled = true;
+
+            const baseRent = parseFloat(baseRentInput.value) || 0;
+            const wifiBill = addWifiCheckbox.checked ? 525 : 0;
+            const utilityBill = parseFloat(utilityBillInput.value) || 0;
+            const totalBill = parseFloat(quickTotalInput.value) || (baseRent + utilityBill + wifiBill);
+            const currentMonth = billMonthSelect.value;
+            const rawSharePerPerson = totalBill / roommates.length;
+
+            // Prepare Payload
+            const roommateData = {};
+            roommates.forEach(name => {
+                const spent = parseFloat(document.getElementById(`spent-${name}`).value) || 0;
+                roommateData[name] = {
+                    spent: spent,
+                    netDue: rawSharePerPerson - spent,
+                    isPaid: rentPaymentStatuses[name]
+                };
+            });
+
+            const payload = {
+                type: 'rent',
+                month: currentMonth,
+                baseRent: baseRent,
+                utilityBill: utilityBill,
+                wifiBill: wifiBill,
+                totalBill: totalBill,
+                roommates: roommateData
+            };
+
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    mode: 'no-cors', // Apps Script redirect CORS ইস্যু এড়াতে এটি সবচেয়ে ভালো পদ্ধতি
+                    cache: 'no-cache',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                // no-cors মোডে সরাসরি রেসপন্স রিড করা যায় না, কিন্তু ডেটা সার্ভারে চলে যায়।
+                showToastNotification("🎉 ভাড়ার ডেটা গুগল শিটে পাঠানো হয়েছে! (Check your sheet)", "success");
+                // Auto close popup on success
+                setTimeout(closeSyncModal, 1500);
+            } catch (error) {
+                console.error("Sync Error:", error);
+                showToastNotification("❌ ডেটা পাঠাতে সমস্যা হয়েছে। ইন্টারনেট কানেকশন বা URL চেক করুন!", "error");
+            } finally {
+                syncBtn.innerHTML = originalText;
+                syncBtn.disabled = false;
+            }
+        }
+
+        // Sync Meals & Deposits function
+        async function syncMealsToSheet() {
+            const url = getSavedWebUrl();
+            if (!url) {
+                showToastNotification("⚠️ আগে Settings-এ আপনার Apps Script URL সেভ করুন!", "warning");
+                return;
+            }
+
+            const syncBtn = document.getElementById('sync-meal-btn');
+            const originalText = syncBtn.innerHTML;
+            syncBtn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> Sending...`;
+            syncBtn.disabled = true;
+
+            const totalCost = parseFloat(mealTotalCostInput.value) || 0;
+            const totalMeals = parseFloat(mealTotalCountInput.value) || 0;
+            const mealRate = totalMeals > 0 ? (totalCost / totalMeals) : 0;
+            const currentMonth = billMonthSelect.value;
+
+            // Prepare Roommate Meal Payload
+            const roommateData = {};
+            let totalDepositCollected = 0;
+
+            roommates.forEach(name => {
+                const deposit = parseFloat(document.getElementById(`meal-deposit-${name}`).value) || 0;
+                const mealCount = parseFloat(document.getElementById(`meals-${name}`).value) || 0;
+                const cost = mealCount * mealRate;
+                const balance = deposit - cost;
+                
+                totalDepositCollected += deposit;
+
+                let statusText = "ক্লিয়ার";
+                if (balance > 0) statusText = `পাবে ৳${balance.toFixed(2)}`;
+                else if (balance < 0) statusText = `দেবে ৳${Math.abs(balance).toFixed(2)}`;
+
+                roommateData[name] = {
+                    deposit: deposit,
+                    meals: mealCount,
+                    cost: cost,
+                    balance: balance,
+                    statusText: statusText
+                };
+            });
+
+            const cashBalance = totalDepositCollected - totalCost;
+
+            const payload = {
+                type: 'meals',
+                month: currentMonth,
+                totalCost: totalCost,
+                totalMeals: totalMeals,
+                mealRate: mealRate,
+                totalDeposits: totalDepositCollected,
+                cashBalance: cashBalance,
+                roommates: roommateData
+            };
+
+            try {
+                await fetch(url, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    cache: 'no-cache',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                showToastNotification("🎉 মিলের ডেটা গুগল শিটে পাঠানো হয়েছে! (Check your sheet)", "success");
+                // Auto close popup on success
+                setTimeout(closeSyncModal, 1500);
+            } catch (error) {
+                console.error("Sync Error:", error);
+                showToastNotification("❌ ডেটা পাঠাতে সমস্যা হয়েছে। ইন্টারনেট কানেকশন বা URL চেক করুন!", "error");
+            } finally {
+                syncBtn.innerHTML = originalText;
+                syncBtn.disabled = false;
+            }
         }
     </script>
 </body>
